@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
+
+        // User yang sudah login dan membuka /login atau /register diarahkan sesuai role.
+        $middleware->redirectUsersTo(fn (Request $request) => \App\Http\Controllers\AuthController::homeFor($request->user()));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

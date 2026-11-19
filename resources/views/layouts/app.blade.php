@@ -1,48 +1,74 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'PinjamRuang FILKOM')</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    @include('partials.head')
 </head>
 <body>
-    {{-- Layout user: navbar atas --}}
-    <nav class="navbar navbar-expand-lg bg-white border-bottom">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url('/beranda') }}"><i class="bi bi-door-open text-primary"></i> PinjamRuang</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navUser"><span class="navbar-toggler-icon"></span></button>
-            <div class="collapse navbar-collapse" id="navUser">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link {{ request()->is('beranda') ? 'active fw-semibold' : '' }}" href="{{ url('/beranda') }}">Beranda</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->is('jadwal*') ? 'active fw-semibold' : '' }}" href="{{ url('/jadwal') }}">Jadwal Ruangan</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->is('pengajuan/buat') ? 'active fw-semibold' : '' }}" href="{{ url('/pengajuan/buat') }}">Ajukan Peminjaman</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->is('pengajuan') ? 'active fw-semibold' : '' }}" href="{{ url('/pengajuan') }}">Pengajuan Saya</a></li>
+    {{-- Layout user — Navbar/User (desktop) & Topbar/Mobile (User) --}}
+    @php
+        $navItems = [
+            ['url' => url('/beranda'),        'label' => 'Beranda',           'active' => request()->is('beranda')],
+            ['url' => url('/jadwal'),         'label' => 'Jadwal Ruangan',    'active' => request()->is('jadwal*')],
+            ['url' => url('/pengajuan/buat'), 'label' => 'Ajukan Peminjaman', 'active' => request()->is('pengajuan/buat')],
+            ['url' => url('/pengajuan'),      'label' => 'Pengajuan Saya',    'active' => request()->is('pengajuan')],
+        ];
+        $onProfile = request()->is('profil*');
+    @endphp
+    <header class="pr-navbar">
+        <div class="pr-container pr-navbar-inner">
+            <div class="pr-navbar-left">
+                @include('partials.logo', ['href' => url('/beranda')])
+                <nav class="pr-nav d-none d-lg-flex" aria-label="Navigasi utama">
+                    @foreach ($navItems as $item)
+                        <a class="pr-nav-link {{ $item['active'] ? 'active' : '' }}" href="{{ $item['url'] }}" @if ($item['active']) aria-current="page" @endif>{{ $item['label'] }}</a>
+                    @endforeach
+                </nav>
+            </div>
+
+            {{-- Desktop: chip pengguna + dropdown --}}
+            <div class="dropdown d-none d-lg-block">
+                <button class="pr-user-chip {{ $onProfile ? 'active' : '' }}" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    @include('partials.avatar', ['user' => auth()->user()])
+                    <span class="pr-user-meta">
+                        <span class="pr-user-name">{{ \Illuminate\Support\Str::words(auth()->user()->name, 2, '') }}</span>
+                        <span class="pr-user-role">Pengguna</span>
+                    </span>
+                    <span class="text-muted-pr d-inline-flex">@include('partials.icon', ['name' => 'chevron-down', 'size' => 16])</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end pr-dropdown">
+                    <li><a class="dropdown-item" href="{{ route('profile.edit') }}">@include('partials.icon', ['name' => 'user']) Profil</a></li>
+                    <li>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-danger-pr">@include('partials.icon', ['name' => 'logout']) Keluar</button>
+                        </form>
+                    </li>
                 </ul>
-                <div class="dropdown">
-                    <a class="btn btn-light dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ auth()->user()->name ?? 'Pengguna' }}</a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{{ url('/profil') }}"><i class="bi bi-person"></i> Profil</a></li>
-                        <li><form method="POST" action="{{ url('/logout') }}">@csrf<button class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Keluar</button></form></li>
-                    </ul>
-                </div>
+            </div>
+
+            {{-- Mobile: avatar (ke profil) + tombol menu --}}
+            <div class="d-flex d-lg-none align-items-center gap-2">
+                <a href="{{ route('profile.edit') }}" aria-label="Profil">@include('partials.avatar', ['user' => auth()->user()])</a>
+                <button class="pr-icon-btn" type="button" data-bs-toggle="collapse" data-bs-target="#menuUser" aria-controls="menuUser" aria-expanded="false" aria-label="Buka menu">
+                    @include('partials.icon', ['name' => 'menu'])
+                </button>
             </div>
         </div>
-    </nav>
-    <main class="container py-4">
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-        @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
-        @endif
+        <div class="collapse d-lg-none pr-mobile-menu" id="menuUser">
+            <nav class="pr-nav" aria-label="Navigasi utama (mobile)">
+                @foreach ($navItems as $item)
+                    <a class="pr-nav-link {{ $item['active'] ? 'active' : '' }}" href="{{ $item['url'] }}">{{ $item['label'] }}</a>
+                @endforeach
+                <a class="pr-nav-link {{ $onProfile ? 'active' : '' }}" href="{{ route('profile.edit') }}">Profil</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="pr-container pr-main">
+        @include('partials.flash', ['class' => 'mb-4'])
         @yield('content')
     </main>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @stack('scripts')
 </body>
 </html>

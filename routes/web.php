@@ -12,17 +12,19 @@ use Illuminate\Support\Facades\Route;
 
 // ============ PUBLIK & AUTH — Husein (HSM) ============
 Route::view('/', 'landing')->name('landing');
-// Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-// Route::post('/login', [AuthController::class, 'login']);
-// Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-// Route::post('/register', [AuthController::class, 'register']);
-// Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+});
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // ============ PROFIL (user & admin) — Husein (HSM) ============
 Route::middleware('auth')->group(function () {
-    // Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
-    // Route::put('/profil/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profil/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
 // ============ JADWAL RUANGAN (user) — Aulia (AL) ============
