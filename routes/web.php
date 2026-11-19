@@ -45,8 +45,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // --- Kelola Ruangan — Aulia (AL) ---
     // Route::resource('ruangan', RoomController::class)->except('show')->parameters(['ruangan' => 'room']);
 
-    // --- Dashboard & Verifikasi — Fata (FI) ---
-    // Route::get('/', [VerificationController::class, 'dashboard'])->name('dashboard');
-    // Route::get('/verifikasi', [VerificationController::class, 'index'])->name('verifications.index');
-    // Route::patch('/verifikasi/{booking}', [VerificationController::class, 'update'])->name('verifications.update');
+// --- Dashboard & Verifikasi — Fata (FI) ---
+    Route::get('/', [VerificationController::class, 'dashboard'])->name('dashboard');
+    Route::get('/verifikasi', [VerificationController::class, 'index'])->name('verifications.index');
+    Route::patch('/verifikasi/{booking}', [VerificationController::class, 'update'])->name('verifications.update');
 });
