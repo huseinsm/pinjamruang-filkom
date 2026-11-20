@@ -29,7 +29,7 @@ Route::middleware('auth')->group(function () {
 
 // ============ JADWAL RUANGAN (user) — Aulia (AL) ============
 Route::middleware('auth')->group(function () {
-    // Route::get('/jadwal', [ScheduleController::class, 'index'])->name('schedule.index');
+    Route::get('/jadwal', [ScheduleController::class, 'index'])->name('schedule.index');
 });
 
 // ============ PENGAJUAN (user) — Reno (RS) ============
@@ -43,7 +43,7 @@ Route::middleware('auth')->group(function () {
 // ============ ADMIN ============
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // --- Kelola Ruangan — Aulia (AL) ---
-    // Route::resource('ruangan', RoomController::class)->except('show')->parameters(['ruangan' => 'room']);
+    Route::resource('ruangan', RoomController::class)->except('show')->parameters(['ruangan' => 'room']);
 
     // --- Dashboard & Verifikasi — Fata (FI) ---
     // Route::get('/', [VerificationController::class, 'dashboard'])->name('dashboard');
