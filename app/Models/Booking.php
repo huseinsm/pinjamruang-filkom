@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Booking extends Model
 {
-    protected $fillable = ['user_id', 'room_id', 'tanggal', 'sesi', 'keperluan', 'status'];
+    protected $fillable = [
+        'user_id', 'room_id', 'tanggal', 'sesi', 'keperluan', 'status',
+        'nama_peminjam', 'kontak_peminjam',
+    ];
 
     protected function casts(): array
     {
@@ -29,5 +32,15 @@ class Booking extends Model
     {
         $s = config('sesi')[$this->sesi] ?? null;
         return $s ? "{$s['mulai']} – {$s['selesai']}" : '-';
+    }
+
+    public function getIsManualAttribute(): bool
+    {
+        return $this->nama_peminjam !== null;
+    }
+
+    public function getNamaPemohonAttribute(): string
+    {
+        return $this->nama_peminjam ?? $this->user->name;
     }
 }
