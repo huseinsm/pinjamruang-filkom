@@ -56,7 +56,7 @@
         </div>
         <div class="field">
             <label class="field-label" for="fGedung">Gedung</label>
-            <select id="fGedung" name="gedung" class="form-select" onchange="this.form.submit()">
+            <select id="fGedung" name="gedung" class="form-select" onchange="this.form.ruang.value = ''; this.form.submit()">
                 <option value="">Semua gedung</option>
                 @foreach ($gedungList as $g)
                     <option value="{{ $g }}" @selected((string) request('gedung') === (string) $g)>{{ $g }}</option>
@@ -65,7 +65,7 @@
         </div>
         <div class="field">
             <label class="field-label" for="fLantai">Lantai</label>
-            <select id="fLantai" name="lantai" class="form-select" onchange="this.form.submit()">
+            <select id="fLantai" name="lantai" class="form-select" onchange="this.form.ruang.value = ''; this.form.submit()">
                 <option value="">Semua lantai</option>
                 @foreach ($lantaiList as $l)
                     <option value="{{ $l }}" @selected((string) request('lantai') === (string) $l)>Lantai {{ $l }}</option>
@@ -74,10 +74,11 @@
         </div>
         <div class="field">
             <label class="field-label" for="fRuang">Ruang</label>
-            <select id="fRuang" name="ruang" class="form-select" onchange="this.form.submit()">
-                <option value="">Semua ruang</option>
-                @foreach ($opsiRuang as $o)
-                    <option value="{{ $o['id'] }}" @selected((string) request('ruang') === (string) $o['id'])>{{ $o['label'] }}</option>
+            {{-- Nomor ruangan saja; aktif setelah gedung & lantai dipilih --}}
+            <select id="fRuang" name="ruang" class="form-select" onchange="this.form.submit()" @disabled(! $bisaPilihRuang)>
+                <option value="">{{ $bisaPilihRuang ? 'Semua ruang' : 'Pilih gedung & lantai dulu' }}</option>
+                @foreach ($opsiRuang as $nomor)
+                    <option value="{{ $nomor }}" @selected((string) request('ruang') === (string) $nomor)>{{ $nomor }}</option>
                 @endforeach
             </select>
         </div>

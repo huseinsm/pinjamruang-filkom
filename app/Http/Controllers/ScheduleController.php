@@ -16,6 +16,10 @@ class ScheduleController extends Controller
         $tanggal = $this->parseTanggal($request->query('tanggal'), $sekarang);
         $sesi = config('sesi');
 
+        // Filter Ruang (nomor saja) bertingkat: hanya berlaku jika gedung & lantai sudah dipilih
+        $bisaPilihRuang = $request->filled('gedung') && $request->filled('lantai');
+        $ruang = $bisaPilihRuang && ctype_digit((string) $request->query('ruang')) ? (int) $request->query('ruang') : null;
+
         // Hanya pengajuan berstatus approved pada tanggal terpilih
         $rooms = Room::query()
             ->with(['bookings' => fn ($q) => $q
@@ -23,14 +27,13 @@ class ScheduleController extends Controller
                 ->whereDate('tanggal', $tanggal->toDateString())])
             ->when($request->filled('gedung'), fn ($q) => $q->where('gedung', $request->query('gedung')))
             ->when($request->filled('lantai'), fn ($q) => $q->where('lantai', $request->query('lantai')))
-            ->when($request->filled('ruang'), fn ($q) => $q->where('id', $request->query('ruang')))
+            ->when($ruang !== null, fn ($q) => $q->where('ruangan', $ruang))
             ->orderBy('gedung')->orderBy('lantai')->orderBy('ruangan')
             ->get();
 
         // $slots[room_id][no_sesi] = ['status' => terpakai|lewat|tersedia, 'label' => ...]
         $slots = [];
         foreach ($rooms as $room) {
-            $room->setAttribute('kode', $this->kode($room));
             $booking = $room->bookings->keyBy('sesi');
 
             foreach ($sesi as $no => $s) {
@@ -49,22 +52,16 @@ class ScheduleController extends Controller
         // Data untuk dropdown filter
         $gedungList = Room::select('gedung')->distinct()->orderBy('gedung')->pluck('gedung');
         $lantaiList = Room::select('lantai')->distinct()->orderBy('lantai')->pluck('lantai');
-        $opsiRuang = Room::orderBy('gedung')->orderBy('lantai')->orderBy('ruangan')->get()
-            ->map(fn (Room $r) => ['id' => $r->id, 'label' => $this->kode($r).' · '.$r->nama]);
+        $opsiRuang = $bisaPilihRuang
+            ? Room::where('gedung', $request->query('gedung'))->where('lantai', $request->query('lantai'))
+                ->orderBy('ruangan')->pluck('ruangan')
+            : collect();
 
         $tanggalLabel = $tanggal->copy()->locale('id')->translatedFormat('l, j F Y');
 
         return view('schedule.index', compact(
-            'rooms', 'slots', 'sesi', 'tanggal', 'tanggalLabel', 'gedungList', 'lantaiList', 'opsiRuang'
+            'rooms', 'slots', 'sesi', 'tanggal', 'tanggalLabel', 'gedungList', 'lantaiList', 'opsiRuang', 'bisaPilihRuang'
         ));
-    }
-
-    // "A1.4" untuk gedung satu huruf, "Rinov 3.1" untuk gedung bernama panjang
-    private function kode(Room $room): string
-    {
-        return mb_strlen($room->gedung) > 1
-            ? "{$room->gedung} {$room->ruangan}"
-            : "{$room->gedung}{$room->ruangan}";
     }
 
     private function parseTanggal(?string $nilai, Carbon $default): Carbon

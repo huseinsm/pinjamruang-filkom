@@ -17,8 +17,17 @@ class RoomController extends Controller
             ->when($request->filled('q'), function ($query) use ($request) {
                 $q = trim($request->input('q'));
                 $query->where(function ($w) use ($q) {
-                    $w->where('nama', 'like', "%{$q}%")
-                      ->orWhere('ruangan', 'like', "%{$q}%");
+                    $w->where('nama', 'like', "%{$q}%");
+
+                    if (ctype_digit($q)) {
+                        // angka saja -> nomor ruangan
+                        $w->orWhere('ruangan', (int) $q);
+                    } elseif (preg_match('/^(\D+?)\s*(\d+)\.(\d+)$/u', $q, $m)) {
+                        // kode lengkap, mis. "F4.5" atau "Rinov 3.1"
+                        $w->orWhere(fn ($k) => $k->where('gedung', trim($m[1]))
+                            ->where('lantai', (int) $m[2])
+                            ->where('ruangan', (int) $m[3]));
+                    }
                 });
             })
             ->when($request->filled('gedung'), fn ($query) => $query->where('gedung', $request->input('gedung')))
@@ -76,9 +85,8 @@ class RoomController extends Controller
     private function validated(Request $request, ?Room $room = null): array
     {
         $request->merge([
-            'nama'    => trim((string) $request->input('nama')),
-            'gedung'  => trim((string) $request->input('gedung')),
-            'ruangan' => trim((string) $request->input('ruangan')),
+            'nama'   => trim((string) $request->input('nama')),
+            'gedung' => trim((string) $request->input('gedung')),
         ]);
 
         return $request->validate([
@@ -86,10 +94,11 @@ class RoomController extends Controller
             'gedung'    => ['required', 'string', 'max:30'],
             'lantai'    => ['required', 'integer', 'min:1', 'max:20'],
             'ruangan'   => [
-                'required', 'string', 'max:10',
-                // nomor ruangan unik per gedung (sesuai unique di migration)
+                'required', 'integer', 'min:1', 'max:999',
+                // nomor ruangan unik per gedung + lantai (sesuai unique di migration)
                 Rule::unique('rooms', 'ruangan')
-                    ->where(fn ($q) => $q->where('gedung', $request->input('gedung')))
+                    ->where(fn ($q) => $q->where('gedung', $request->input('gedung'))
+                        ->where('lantai', $request->input('lantai')))
                     ->ignore($room?->id),
             ],
             'kapasitas' => ['required', 'integer', 'min:1', 'max:1000'],
@@ -99,7 +108,7 @@ class RoomController extends Controller
             'max.string'     => ':attribute maksimal :max karakter.',
             'max.numeric'    => ':attribute maksimal :max.',
             'min.numeric'    => ':attribute minimal :min.',
-            'ruangan.unique' => 'Nomor ruangan ini sudah dipakai di gedung tersebut.',
+            'ruangan.unique' => 'Nomor ruangan ini sudah dipakai di gedung dan lantai tersebut.',
         ], [
             'nama'      => 'Nama ruangan',
             'gedung'    => 'Gedung',

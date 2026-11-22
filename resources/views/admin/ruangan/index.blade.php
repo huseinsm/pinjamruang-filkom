@@ -104,12 +104,12 @@
                         <button type="button" class="pr-icon-btn" data-edit
                                 data-id="{{ $room->id }}" data-nama="{{ $room->nama }}" data-gedung="{{ $room->gedung }}"
                                 data-lantai="{{ $room->lantai }}" data-ruangan="{{ $room->ruangan }}" data-kapasitas="{{ $room->kapasitas }}"
-                                aria-label="Ubah {{ $room->nama }}" title="Ubah">
+                                aria-label="Ubah {{ $room->kode }} {{ $room->nama }}" title="Ubah">
                             <i class="bi bi-pencil" aria-hidden="true"></i>
                         </button>
                         <button type="button" class="pr-icon-btn is-danger" data-delete
-                                data-id="{{ $room->id }}" data-nama="{{ $room->nama }}" data-bookings="{{ $room->bookings_count }}"
-                                aria-label="Hapus {{ $room->nama }}" title="Hapus">
+                                data-id="{{ $room->id }}" data-nama="{{ $room->kode }} · {{ $room->nama }}" data-bookings="{{ $room->bookings_count }}"
+                                aria-label="Hapus {{ $room->kode }} {{ $room->nama }}" title="Hapus">
                             <i class="bi bi-trash" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -168,7 +168,7 @@
             <div class="modal-body">
                 <div class="field">
                     <label class="field-label" for="fNama">Nama ruangan</label>
-                    <input type="text" id="fNama" name="nama" maxlength="100" required placeholder="Contoh: Ruang Kelas F3.1"
+                    <input type="text" id="fNama" name="nama" maxlength="100" required placeholder="Contoh: Ruang Kelas"
                            class="form-control @error('nama') is-invalid @enderror" value="{{ old('nama') }}">
                     @error('nama') <span class="field-error">{{ $message }}</span> @enderror
                 </div>
@@ -196,7 +196,7 @@
                     </div>
                     <div class="field">
                         <label class="field-label" for="fRuangan">Nomor ruangan</label>
-                        <input type="text" id="fRuangan" name="ruangan" maxlength="10" required placeholder="3.4"
+                        <input type="number" id="fRuangan" name="ruangan" min="1" max="999" required placeholder="4"
                                class="form-control @error('ruangan') is-invalid @enderror" value="{{ old('ruangan') }}">
                         @error('ruangan') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
