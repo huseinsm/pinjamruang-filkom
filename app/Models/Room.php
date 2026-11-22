@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Room extends Model
 {
-    protected $fillable = ['nama', 'gedung', 'lantai', 'ruangan', 'kapasitas'];
+    protected $fillable = ['gedung', 'lantai', 'ruangan', 'kapasitas'];
 
     protected function casts(): array
     {
@@ -19,12 +19,16 @@ class Room extends Model
         return $this->hasMany(Booking::class);
     }
 
-    // Kode tampilan: "F4.5" untuk gedung satu huruf, "Rinov 3.1" untuk gedung bernama panjang.
-    // Dibentuk dari gedung + lantai + nomor ruangan, jadi tidak disimpan di database.
+    // Nama/kode ruangan: gedung + lantai + nomor, contoh "F 2.4" = gedung F, lantai 2, ruangan nomor 4.
+    // Tidak disimpan di database.
     public function getKodeAttribute(): string
     {
-        $nomor = "{$this->lantai}.{$this->ruangan}";
+        return "{$this->gedung} {$this->lantai}.{$this->ruangan}";
+    }
 
-        return mb_strlen($this->gedung) > 1 ? "{$this->gedung} {$nomor}" : "{$this->gedung}{$nomor}";
+    // Alias agar $room->nama tetap bisa dipakai di tampilan
+    public function getNamaAttribute(): string
+    {
+        return $this->kode;
     }
 }

@@ -16,9 +16,10 @@ class ScheduleController extends Controller
         $tanggal = $this->parseTanggal($request->query('tanggal'), $sekarang);
         $sesi = config('sesi');
 
-        // Filter Ruang (nomor saja) bertingkat: hanya berlaku jika gedung & lantai sudah dipilih
+        // Filter Ruang = isian nomor (angka bebas), hanya berlaku jika gedung & lantai sudah dipilih
         $bisaPilihRuang = $request->filled('gedung') && $request->filled('lantai');
-        $ruang = $bisaPilihRuang && ctype_digit((string) $request->query('ruang')) ? (int) $request->query('ruang') : null;
+        $nilaiRuang = (string) $request->query('ruang');
+        $ruang = $bisaPilihRuang && ctype_digit($nilaiRuang) && (int) $nilaiRuang > 0 ? (int) $nilaiRuang : null;
 
         // Hanya pengajuan berstatus approved pada tanggal terpilih
         $rooms = Room::query()
@@ -52,15 +53,11 @@ class ScheduleController extends Controller
         // Data untuk dropdown filter
         $gedungList = Room::select('gedung')->distinct()->orderBy('gedung')->pluck('gedung');
         $lantaiList = Room::select('lantai')->distinct()->orderBy('lantai')->pluck('lantai');
-        $opsiRuang = $bisaPilihRuang
-            ? Room::where('gedung', $request->query('gedung'))->where('lantai', $request->query('lantai'))
-                ->orderBy('ruangan')->pluck('ruangan')
-            : collect();
 
         $tanggalLabel = $tanggal->copy()->locale('id')->translatedFormat('l, j F Y');
 
         return view('schedule.index', compact(
-            'rooms', 'slots', 'sesi', 'tanggal', 'tanggalLabel', 'gedungList', 'lantaiList', 'opsiRuang', 'bisaPilihRuang'
+            'rooms', 'slots', 'sesi', 'tanggal', 'tanggalLabel', 'gedungList', 'lantaiList', 'ruang', 'bisaPilihRuang'
         ));
     }
 

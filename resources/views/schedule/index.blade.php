@@ -74,13 +74,10 @@
         </div>
         <div class="field">
             <label class="field-label" for="fRuang">Ruang</label>
-            {{-- Nomor ruangan saja; aktif setelah gedung & lantai dipilih --}}
-            <select id="fRuang" name="ruang" class="form-select" onchange="this.form.submit()" @disabled(! $bisaPilihRuang)>
-                <option value="">{{ $bisaPilihRuang ? 'Semua ruang' : 'Pilih gedung & lantai dulu' }}</option>
-                @foreach ($opsiRuang as $nomor)
-                    <option value="{{ $nomor }}" @selected((string) request('ruang') === (string) $nomor)>{{ $nomor }}</option>
-                @endforeach
-            </select>
+            {{-- Isian nomor ruangan (angka); aktif setelah gedung & lantai dipilih, kosong = semua ruang --}}
+            <input type="number" id="fRuang" name="ruang" min="1" step="1" inputmode="numeric" class="form-control"
+                   value="{{ $ruang }}" placeholder="{{ $bisaPilihRuang ? 'Semua ruang' : 'Pilih gedung & lantai dulu' }}"
+                   onchange="this.form.submit()" @disabled(! $bisaPilihRuang)>
         </div>
         <a href="{{ route('schedule.index') }}" class="btn btn-secondary-pr">Reset</a>
     </div>
@@ -113,7 +110,7 @@
             <div class="sched-row">
                 <div>
                     <div class="sched-room-code">{{ $room->kode }}</div>
-                    <div class="sched-room-sub">{{ $room->nama }} &middot; Gedung {{ $room->gedung }}, Lt {{ $room->lantai }} &middot; {{ $room->kapasitas }} org</div>
+                    <div class="sched-room-sub">Gedung {{ $room->gedung }}, Lt {{ $room->lantai }} &middot; {{ $room->kapasitas }} org</div>
                 </div>
                 @foreach ($sesi as $no => $s)
                     @php($c = $slots[$room->id][$no])

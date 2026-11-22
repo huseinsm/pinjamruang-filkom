@@ -9,26 +9,23 @@ use Illuminate\Validation\Rule;
 
 class RoomController extends Controller
 {
-    // READ: daftar + cari (nama / nomor) + filter gedung & lantai
+    // READ: daftar + cari (nama "F 4.5" / nomor / gedung) + filter gedung & lantai
     public function index(Request $request)
     {
         $rooms = Room::query()
             ->withCount('bookings')
             ->when($request->filled('q'), function ($query) use ($request) {
                 $q = trim($request->input('q'));
-                $query->where(function ($w) use ($q) {
-                    $w->where('nama', 'like', "%{$q}%");
 
-                    if (ctype_digit($q)) {
-                        // angka saja -> nomor ruangan
-                        $w->orWhere('ruangan', (int) $q);
-                    } elseif (preg_match('/^(\D+?)\s*(\d+)\.(\d+)$/u', $q, $m)) {
-                        // kode lengkap, mis. "F4.5" atau "Rinov 3.1"
-                        $w->orWhere(fn ($k) => $k->where('gedung', trim($m[1]))
-                            ->where('lantai', (int) $m[2])
-                            ->where('ruangan', (int) $m[3]));
-                    }
-                });
+                if (ctype_digit($q)) {
+                    // angka saja -> nomor ruangan
+                    $query->where('ruangan', (int) $q);
+                } elseif (preg_match('/^(\D+?)\s*(\d+)\.(\d+)$/u', $q, $m)) {
+                    // nama lengkap, mis. "F 4.5", "F4.5", "Rinov 3.1"
+                    $query->where('gedung', trim($m[1]))->where('lantai', (int) $m[2])->where('ruangan', (int) $m[3]);
+                } else {
+                    $query->where('gedung', 'like', "%{$q}%");
+                }
             })
             ->when($request->filled('gedung'), fn ($query) => $query->where('gedung', $request->input('gedung')))
             ->when($request->filled('lantai'), fn ($query) => $query->where('lantai', $request->input('lantai')))
@@ -84,17 +81,14 @@ class RoomController extends Controller
 
     private function validated(Request $request, ?Room $room = null): array
     {
-        $request->merge([
-            'nama'   => trim((string) $request->input('nama')),
-            'gedung' => trim((string) $request->input('gedung')),
-        ]);
+        $request->merge(['gedung' => trim((string) $request->input('gedung'))]);
 
         return $request->validate([
-            'nama'      => ['required', 'string', 'max:100'],
             'gedung'    => ['required', 'string', 'max:30'],
             'lantai'    => ['required', 'integer', 'min:1', 'max:20'],
             'ruangan'   => [
-                'required', 'integer', 'min:1', 'max:999',
+                // tanpa batas khusus; 65535 hanya batas tipe kolom (unsignedSmallInteger)
+                'required', 'integer', 'min:1', 'max:65535',
                 // nomor ruangan unik per gedung + lantai (sesuai unique di migration)
                 Rule::unique('rooms', 'ruangan')
                     ->where(fn ($q) => $q->where('gedung', $request->input('gedung'))
@@ -110,7 +104,6 @@ class RoomController extends Controller
             'min.numeric'    => ':attribute minimal :min.',
             'ruangan.unique' => 'Nomor ruangan ini sudah dipakai di gedung dan lantai tersebut.',
         ], [
-            'nama'      => 'Nama ruangan',
             'gedung'    => 'Gedung',
             'lantai'    => 'Lantai',
             'ruangan'   => 'Nomor ruangan',

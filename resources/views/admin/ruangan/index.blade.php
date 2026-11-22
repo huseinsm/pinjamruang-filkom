@@ -62,7 +62,7 @@
     <div class="room-search">
         <i class="bi bi-search" aria-hidden="true"></i>
         <input type="search" name="q" value="{{ request('q') }}" class="form-control"
-               placeholder="Cari nama atau nomor ruangan" aria-label="Cari nama atau nomor ruangan">
+               placeholder="Cari ruangan, mis. F 3.1 atau 1" aria-label="Cari ruangan">
     </div>
     <select name="gedung" class="form-select" aria-label="Filter gedung" onchange="this.form.submit()">
         <option value="">Semua gedung</option>
@@ -94,7 +94,7 @@
         <tbody>
         @forelse ($rooms as $room)
             <tr>
-                <td class="room-name">{{ $room->nama }}</td>
+                <td class="room-name">{{ $room->kode }}</td>
                 <td>{{ $room->gedung }}</td>
                 <td>{{ $room->lantai }}</td>
                 <td>{{ $room->ruangan }}</td>
@@ -102,14 +102,14 @@
                 <td>
                     <div class="room-actions">
                         <button type="button" class="pr-icon-btn" data-edit
-                                data-id="{{ $room->id }}" data-nama="{{ $room->nama }}" data-gedung="{{ $room->gedung }}"
+                                data-id="{{ $room->id }}" data-gedung="{{ $room->gedung }}"
                                 data-lantai="{{ $room->lantai }}" data-ruangan="{{ $room->ruangan }}" data-kapasitas="{{ $room->kapasitas }}"
-                                aria-label="Ubah {{ $room->kode }} {{ $room->nama }}" title="Ubah">
+                                aria-label="Ubah {{ $room->kode }}" title="Ubah">
                             <i class="bi bi-pencil" aria-hidden="true"></i>
                         </button>
                         <button type="button" class="pr-icon-btn is-danger" data-delete
-                                data-id="{{ $room->id }}" data-nama="{{ $room->kode }} · {{ $room->nama }}" data-bookings="{{ $room->bookings_count }}"
-                                aria-label="Hapus {{ $room->kode }} {{ $room->nama }}" title="Hapus">
+                                data-id="{{ $room->id }}" data-nama="{{ $room->kode }}" data-bookings="{{ $room->bookings_count }}"
+                                aria-label="Hapus {{ $room->kode }}" title="Hapus">
                             <i class="bi bi-trash" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -167,13 +167,6 @@
 
             <div class="modal-body">
                 <div class="field">
-                    <label class="field-label" for="fNama">Nama ruangan</label>
-                    <input type="text" id="fNama" name="nama" maxlength="100" required placeholder="Contoh: Ruang Kelas"
-                           class="form-control @error('nama') is-invalid @enderror" value="{{ old('nama') }}">
-                    @error('nama') <span class="field-error">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="field">
                     <label class="field-label" for="fGedung">Gedung</label>
                     <input type="text" id="fGedung" name="gedung" maxlength="30" required autocomplete="off" placeholder="Contoh: F"
                            class="form-control @error('gedung') is-invalid @enderror" value="{{ old('gedung') }}">
@@ -196,7 +189,7 @@
                     </div>
                     <div class="field">
                         <label class="field-label" for="fRuangan">Nomor ruangan</label>
-                        <input type="number" id="fRuangan" name="ruangan" min="1" max="999" required placeholder="4"
+                        <input type="number" id="fRuangan" name="ruangan" min="1" step="1" required placeholder="4"
                                class="form-control @error('ruangan') is-invalid @enderror" value="{{ old('ruangan') }}">
                         @error('ruangan') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
@@ -207,6 +200,7 @@
                         @error('kapasitas') <span class="field-error">{{ $message }}</span> @enderror
                     </div>
                 </div>
+                <span class="field-hint">Nama ruangan: <strong id="previewNama">—</strong> (gedung + lantai + nomor)</span>
             </div>
 
             <div class="modal-footer">
@@ -249,15 +243,22 @@
     const modalRuangan = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalRuangan'));
     const modalHapus   = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalHapus'));
     const f = {
-        nama: document.getElementById('fNama'), gedung: document.getElementById('fGedung'),
+        gedung: document.getElementById('fGedung'),
         lantai: document.getElementById('fLantai'), ruangan: document.getElementById('fRuangan'),
         kapasitas: document.getElementById('fKapasitas'),
     };
     const chips = document.querySelectorAll('.chip-pick');
+    const previewNama = document.getElementById('previewNama');
 
+    // Pratinjau nama ruangan: "F 2.4" = gedung F, lantai 2, ruangan nomor 4
+    function syncNama() {
+        const g = f.gedung.value.trim(), l = f.lantai.value.trim(), r = f.ruangan.value.trim();
+        previewNama.textContent = g && l && r ? g + ' ' + l + '.' + r : '—';
+    }
     function syncChips() {
         const v = f.gedung.value.trim().toLowerCase();
         chips.forEach(c => c.classList.toggle('is-on', c.dataset.gedung.toLowerCase() === v));
+        syncNama();
     }
     function clearErrors() {
         form.querySelectorAll('.is-invalid').forEach(e => e.classList.remove('is-invalid'));
@@ -283,7 +284,7 @@
     document.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => {
         clearErrors();
         const d = btn.dataset;
-        f.nama.value = d.nama; f.gedung.value = d.gedung; f.lantai.value = d.lantai;
+        f.gedung.value = d.gedung; f.lantai.value = d.lantai;
         f.ruangan.value = d.ruangan; f.kapasitas.value = d.kapasitas;
         setMode(d.id);
         syncChips();
@@ -292,7 +293,9 @@
 
     chips.forEach(c => c.addEventListener('click', () => { f.gedung.value = c.dataset.gedung; syncChips(); f.gedung.focus(); }));
     f.gedung.addEventListener('input', syncChips);
-    document.getElementById('modalRuangan').addEventListener('shown.bs.modal', () => f.nama.focus());
+    f.lantai.addEventListener('input', syncNama);
+    f.ruangan.addEventListener('input', syncNama);
+    document.getElementById('modalRuangan').addEventListener('shown.bs.modal', () => f.gedung.focus());
 
     document.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => {
         const d = btn.dataset;
