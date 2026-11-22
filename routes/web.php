@@ -43,10 +43,12 @@ Route::middleware('auth')->group(function () {
 // ============ ADMIN ============
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // --- Kelola Ruangan — Aulia (AL) ---
-    Route::resource('ruangan', RoomController::class)->except('show')->parameters(['ruangan' => 'room']);
+    // Route::resource('ruangan', RoomController::class)->except('show')->parameters(['ruangan' => 'room']);
 
-// --- Dashboard & Verifikasi — Fata (FI) ---
+    // --- Dashboard & Verifikasi — Fata (FI) ---
     Route::get('/', [VerificationController::class, 'dashboard'])->name('dashboard');
     Route::get('/verifikasi', [VerificationController::class, 'index'])->name('verifications.index');
+    Route::post('/verifikasi/manual', [VerificationController::class, 'storeManual'])->name('verifications.manual');
+    Route::get('/verifikasi/slot-terpakai', [VerificationController::class, 'usedSessions'])->name('verifications.used');
     Route::patch('/verifikasi/{booking}', [VerificationController::class, 'update'])->name('verifications.update');
 });
